@@ -11,7 +11,14 @@ import { ResponseFormatInterceptor } from './shared/interceptors/response-format
 
 function setupMiddleware(app: INestApplication) {
   app.use(helmet());
-  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+      forbidUnknownValues: true,
+      enableDebugMessages: true
+    })
+  );
   app.useGlobalInterceptors(
     new ClassSerializerInterceptor(app.get(Reflector)),
     new ResponseFormatInterceptor()

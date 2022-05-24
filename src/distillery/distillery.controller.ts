@@ -1,4 +1,5 @@
 import { PaginationQuery } from '@/queries/PaginationQuery';
+import { createGeoQuery } from '@/utils/query';
 import {
   BadRequestException,
   Body,
@@ -10,7 +11,7 @@ import {
   Post,
   Query
 } from '@nestjs/common';
-import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { ObjectId } from 'mongodb';
 import { DistilleryService } from './distillery.service';
 import { DistillerySearchQueryDto } from './models/distillery-search-query.dto';
@@ -29,7 +30,23 @@ export class DistilleryController {
   public async GetDistilleries(
     @Query() query: DistillerySearchQueryDto
   ): Promise<DistilleryDto[]> {
+    let filter = {};
+    if (query.longitude || query.latitude || query.distance) {
+      filter = createGeoQuery(
+        'location',
+        query.latitude,
+        query.longitude,
+        query.distance
+      );
+    }
+    if (query.name) {
+      filter = {
+        ...filter,
+        name: { $regex: query.name, $options: 'i' }
+      };
+    }
     return await this.distilleryService.getDistilleries(
+      filter,
       query.limit,
       query.skip
     );

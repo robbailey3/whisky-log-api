@@ -1,7 +1,7 @@
 import { DatabaseService } from '@/shared/services/database/database.service';
 import { Injectable } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
-import { ObjectId } from 'mongodb';
+import { Filter, ObjectId } from 'mongodb';
 import { DistilleryDto } from './models/distillery.dto';
 
 @Injectable()
@@ -11,12 +11,15 @@ export class DistilleryService {
   constructor(private readonly db: DatabaseService) {}
 
   public async getDistilleries(
+    filter: Filter<DistilleryDto>,
     limit: number,
     skip: number
   ): Promise<DistilleryDto[]> {
     const docs = await this.db
       .getCollection<DistilleryDto>(this.COLLECTION_NAME)
-      .find({}, { limit, skip })
+      .find(filter)
+      .limit(limit)
+      .skip(skip)
       .toArray();
 
     return docs.map((doc) => plainToInstance(DistilleryDto, doc));
