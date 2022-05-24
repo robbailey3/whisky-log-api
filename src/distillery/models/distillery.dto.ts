@@ -1,12 +1,12 @@
 import { GeoLocation } from '@/models/GeoLocation.dto';
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
 import { IsEmpty, IsNotEmpty, IsString, ValidateNested } from 'class-validator';
-import { ObjectId } from 'mongodb';
+import { ObjectId } from 'bson';
 
 export class DistilleryDto {
   @IsEmpty()
-  @ApiProperty({ readOnly: true })
+  @Transform(({ value }) => value.toHexString(), { toPlainOnly: true })
   public _id: string | ObjectId;
 
   @IsString()

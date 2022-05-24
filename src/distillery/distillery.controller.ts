@@ -3,7 +3,9 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
+  Param,
   Patch,
   Post,
   Query
@@ -11,6 +13,7 @@ import {
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { ObjectId } from 'mongodb';
 import { DistilleryService } from './distillery.service';
+import { DistillerySearchQueryDto } from './models/distillery-search-query.dto';
 import { DistilleryDto } from './models/distillery.dto';
 
 @Controller('distillery')
@@ -20,13 +23,16 @@ export class DistilleryController {
 
   @Get()
   @ApiOkResponse({
-    type: DistilleryDto,
+    type: [DistilleryDto],
     description: 'An array of distillery objects'
   })
   public async GetDistilleries(
-    @Query() query: PaginationQuery
+    @Query() query: DistillerySearchQueryDto
   ): Promise<DistilleryDto[]> {
-    return this.distilleryService.getDistilleries(query.limit, query.skip);
+    return await this.distilleryService.getDistilleries(
+      query.limit,
+      query.skip
+    );
   }
 
   @Get('/:id')
@@ -38,7 +44,9 @@ export class DistilleryController {
   }
 
   @Post()
-  public async CreateDistillery(@Body() distillery: DistilleryDto) {
+  public async CreateDistillery(
+    @Body() distillery: DistilleryDto
+  ): Promise<DistilleryDto> {
     const { insertedId } = await this.distilleryService.createDistillery(
       distillery
     );
@@ -47,13 +55,26 @@ export class DistilleryController {
   }
 
   @Patch('/:id')
-  public async UpdateDistillery(id: string, @Body() distillery: DistilleryDto) {
+  public async UpdateDistillery(
+    @Param('id') id: string,
+    @Body() distillery: DistilleryDto
+  ): Promise<DistilleryDto> {
     if (!ObjectId.isValid(id)) {
       throw new BadRequestException('Invalid id');
     }
-    return this.distilleryService.updateDistillery(
+    await this.distilleryService.updateDistillery(
       ObjectId.createFromHexString(id),
       distillery
     );
+
+    return { ...distillery, _id: id };
+  }
+
+  @Delete('/:id')
+  public async DeleteDistillery(id: string): Promise<void> {
+    if (!ObjectId.isValid(id)) {
+      throw new BadRequestException('Invalid id');
+    }
+    await this.distilleryService.deleteDistillery(new ObjectId(id));
   }
 }

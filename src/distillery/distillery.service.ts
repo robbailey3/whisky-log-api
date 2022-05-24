@@ -1,5 +1,6 @@
 import { DatabaseService } from '@/shared/services/database/database.service';
 import { Injectable } from '@nestjs/common';
+import { plainToInstance } from 'class-transformer';
 import { ObjectId } from 'mongodb';
 import { DistilleryDto } from './models/distillery.dto';
 
@@ -13,16 +14,20 @@ export class DistilleryService {
     limit: number,
     skip: number
   ): Promise<DistilleryDto[]> {
-    return this.db
+    const docs = await this.db
       .getCollection<DistilleryDto>(this.COLLECTION_NAME)
       .find({}, { limit, skip })
       .toArray();
+
+    return docs.map((doc) => plainToInstance(DistilleryDto, doc));
   }
 
   public async getDistilleryById(id: ObjectId) {
-    return this.db
+    const doc = this.db
       .getCollection<DistilleryDto>(this.COLLECTION_NAME)
       .findOne({ _id: id });
+
+    return plainToInstance(DistilleryDto, doc);
   }
 
   public async createDistillery(distillery: DistilleryDto) {
@@ -35,5 +40,11 @@ export class DistilleryService {
     return this.db
       .getCollection<DistilleryDto>(this.COLLECTION_NAME)
       .findOneAndUpdate({ _id: id }, { $set: { ...distillery } });
+  }
+
+  public async deleteDistillery(id: ObjectId) {
+    return this.db
+      .getCollection<DistilleryDto>(this.COLLECTION_NAME)
+      .findOneAndDelete({ _id: id });
   }
 }

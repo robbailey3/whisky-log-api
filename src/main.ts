@@ -7,20 +7,22 @@ import {
   ValidationPipe
 } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ResponseFormatInterceptor } from './shared/interceptors/response-format.interceptor';
 
 function setupMiddleware(app: INestApplication) {
   app.use(helmet());
   app.useGlobalPipes(new ValidationPipe());
   app.useGlobalInterceptors(
-    new ClassSerializerInterceptor(app.get(Reflector), {
-      excludeExtraneousValues: true
-    })
+    new ClassSerializerInterceptor(app.get(Reflector)),
+    new ResponseFormatInterceptor()
   );
 }
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   setupMiddleware(app);
+
+  app.setGlobalPrefix('api');
 
   const config = new DocumentBuilder()
     .setTitle('Whisky Logger App')
@@ -30,6 +32,7 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
+
   await app.listen(3000);
 }
 bootstrap();
