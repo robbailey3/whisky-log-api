@@ -1,5 +1,5 @@
+import { ApiProperty } from '@nestjs/swagger';
 import {
-  ArrayMaxSize,
   ArrayMinSize,
   IsArray,
   IsIn,
@@ -30,5 +30,6 @@ export class GeoLocation {
   @IsArray()
   @ArrayMinSize(2)
   @IsNumber({}, { each: true })
+  @ApiProperty({ type: 'array', items: { type: 'number' } })
   public coordinates: number[] | number[][];
 }

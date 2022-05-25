@@ -1,4 +1,3 @@
-import { PaginationQuery } from '@/queries/PaginationQuery';
 import { createGeoQuery } from '@/utils/query';
 import {
   BadRequestException,
@@ -6,21 +5,28 @@ import {
   Controller,
   Delete,
   Get,
+  Logger,
   Param,
   Patch,
   Post,
   Query
 } from '@nestjs/common';
-import { ApiOkResponse, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { ObjectId } from 'mongodb';
 import { DistilleryService } from './distillery.service';
-import { DistillerySearchQueryDto } from './models/distillery-search-query.dto';
+import { GetDistilleriesQuery } from './queries/getDistilleriesQuery';
 import { DistilleryDto } from './models/distillery.dto';
+import { GeocodingService } from '@/shared/services/geocoding/geocoding.service';
 
 @Controller('distillery')
 @ApiTags('Distillery')
 export class DistilleryController {
-  constructor(private readonly distilleryService: DistilleryService) {}
+  private readonly logger = new Logger(DistilleryController.name);
+
+  constructor(
+    private readonly distilleryService: DistilleryService,
+    private readonly geocodingService: GeocodingService
+  ) {}
 
   @Get()
   @ApiOkResponse({
@@ -28,8 +34,11 @@ export class DistilleryController {
     description: 'An array of distillery objects'
   })
   public async GetDistilleries(
-    @Query() query: DistillerySearchQueryDto
+    @Query() query: GetDistilleriesQuery
   ): Promise<DistilleryDto[]> {
+    this.logger.log(
+      `Get distilleries request received with query: ${JSON.stringify(query)}`
+    );
     let filter = {};
     if (query.longitude || query.latitude || query.distance) {
       filter = createGeoQuery(
@@ -53,22 +62,42 @@ export class DistilleryController {
   }
 
   @Get('/:id')
-  public async GetDistilleryById(id: string): Promise<DistilleryDto> {
+  public async GetDistilleryById(
+    @Param('id') id: string
+  ): Promise<DistilleryDto> {
+    this.logger.log(`Get distillery by id request received with id: ${id}`);
     if (!ObjectId.isValid(id)) {
       throw new BadRequestException('Invalid id');
     }
-    return this.distilleryService.getDistilleryById(new ObjectId(id));
+    return this.distilleryService.getDistilleryById(
+      ObjectId.createFromHexString(id)
+    );
   }
 
   @Post()
   public async CreateDistillery(
     @Body() distillery: DistilleryDto
   ): Promise<DistilleryDto> {
-    const { insertedId } = await this.distilleryService.createDistillery(
+    this.logger.log(
+      `Create distillery request received with distillery: ${JSON.stringify(
+        distillery
+      )}`
+    );
+    const formattedAddress = await this.geocodingService.getFormattedAddress(
+      distillery.location.coordinates[0] as number,
+      distillery.location.coordinates[1] as number
+    );
+
+    distillery.formattedAddress = formattedAddress;
+
+    distillery.dateAdded = new Date();
+    distillery.dateUpdated = new Date();
+
+    const insertedId = await this.distilleryService.createDistillery(
       distillery
     );
 
-    return { ...distillery, _id: (insertedId as ObjectId).toHexString() };
+    return { ...distillery, _id: insertedId.toHexString() };
   }
 
   @Patch('/:id')
@@ -76,9 +105,22 @@ export class DistilleryController {
     @Param('id') id: string,
     @Body() distillery: DistilleryDto
   ): Promise<DistilleryDto> {
+    this.logger.log(
+      `Update distillery request received with id: ${id} and distillery: ${JSON.stringify(
+        distillery
+      )}`
+    );
     if (!ObjectId.isValid(id)) {
       throw new BadRequestException('Invalid id');
     }
+    if (distillery.location && distillery.location.coordinates) {
+      const formattedAddress = await this.geocodingService.getFormattedAddress(
+        distillery.location.coordinates[0] as number,
+        distillery.location.coordinates[1] as number
+      );
+      distillery.formattedAddress = formattedAddress;
+    }
+
     await this.distilleryService.updateDistillery(
       ObjectId.createFromHexString(id),
       distillery
@@ -88,7 +130,9 @@ export class DistilleryController {
   }
 
   @Delete('/:id')
-  public async DeleteDistillery(id: string): Promise<void> {
+  public async DeleteDistillery(@Param('id') id: string): Promise<void> {
+    this.logger.log(`Delete distillery request received with id: ${id}`);
+
     if (!ObjectId.isValid(id)) {
       throw new BadRequestException('Invalid id');
     }

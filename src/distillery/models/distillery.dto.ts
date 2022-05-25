@@ -1,12 +1,18 @@
 import { GeoLocation } from '@/models/GeoLocation.dto';
-import { Transform, Type } from 'class-transformer';
-import { IsNotEmpty, IsString, ValidateNested } from 'class-validator';
-import { ObjectId } from 'bson';
+import { BaseModel } from '@/shared/models/BaseModel';
+import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import {
+  IsEmpty,
+  IsIn,
+  IsNotEmpty,
+  IsString,
+  IsUrl,
+  ValidateNested
+} from 'class-validator';
+import { DistilleryRegion } from '../enums/distilleryRegion';
 
-export class DistilleryDto {
-  @Transform(({ value }) => value.toHexString(), { toPlainOnly: true })
-  public _id: string | ObjectId;
-
+export class DistilleryDto extends BaseModel {
   @IsString()
   public name: string;
 
@@ -14,4 +20,21 @@ export class DistilleryDto {
   @IsNotEmpty()
   @Type(() => GeoLocation)
   public location: GeoLocation;
+
+  @IsString()
+  @IsIn(Object.values(DistilleryRegion))
+  public region: DistilleryRegion;
+
+  @IsUrl()
+  public website: string;
+
+  @IsUrl()
+  public imageSrc: string;
+
+  @IsEmpty()
+  @ApiProperty({ readOnly: true })
+  public formattedAddress: string;
+
+  @IsString()
+  public description?: string;
 }
