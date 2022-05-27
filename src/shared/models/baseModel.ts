@@ -1,10 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ObjectId } from 'bson';
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 
 export class BaseModel {
   @ApiProperty({ readOnly: true })
-  public _id: string | ObjectId;
+  @Type(() => String)
+  public _id?: ObjectId;
 
   @ApiProperty({ readOnly: true })
   public dateAdded: Date;

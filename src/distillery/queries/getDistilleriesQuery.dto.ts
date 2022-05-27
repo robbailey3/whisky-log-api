@@ -16,19 +16,34 @@ export class GetDistilleriesQuery {
   @ApiProperty({ required: false })
   public name?: string;
 
-  @ValidateIf((o) => o.latitude !== undefined)
+  @ValidateIf(
+    (o) =>
+      o.latitude !== undefined ||
+      o.longitude !== undefined ||
+      o.distance !== undefined
+  )
   @IsLatitude()
   @Type(() => Number)
   @ApiProperty({ required: false })
   public latitude?: number;
 
-  @ValidateIf((o) => o.longitude !== undefined)
+  @ValidateIf(
+    (o) =>
+      o.latitude !== undefined ||
+      o.longitude !== undefined ||
+      o.distance !== undefined
+  )
   @IsLongitude()
   @Type(() => Number)
   @ApiProperty({ required: false })
   public longitude?: number;
 
-  @ValidateIf((o) => o.distance !== undefined)
+  @ValidateIf(
+    (o) =>
+      o.latitude !== undefined ||
+      o.longitude !== undefined ||
+      o.distance !== undefined
+  )
   @Min(0)
   @Type(() => Number)
   @IsNumber()

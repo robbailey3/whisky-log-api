@@ -14,19 +14,18 @@ import {
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { ObjectId } from 'mongodb';
 import { DistilleryService } from './distillery.service';
-import { GetDistilleriesQuery } from './queries/getDistilleriesQuery';
+import { GetDistilleriesQuery } from './queries/getDistilleriesQuery.dto';
 import { DistilleryDto } from './models/distillery.dto';
 import { GeocodingService } from '@/shared/services/geocoding/geocoding.service';
+import { CreateDistilleryDto } from './models/createDistillery.dto';
+import { UpdateDistilleryDto } from './models/updateDistillery.dto';
 
 @Controller('distillery')
 @ApiTags('Distillery')
 export class DistilleryController {
   private readonly logger = new Logger(DistilleryController.name);
 
-  constructor(
-    private readonly distilleryService: DistilleryService,
-    private readonly geocodingService: GeocodingService
-  ) {}
+  constructor(private readonly distilleryService: DistilleryService) {}
 
   @Get()
   @ApiOkResponse({
@@ -76,34 +75,21 @@ export class DistilleryController {
 
   @Post()
   public async CreateDistillery(
-    @Body() distillery: DistilleryDto
+    @Body() distillery: CreateDistilleryDto
   ): Promise<DistilleryDto> {
     this.logger.log(
       `Create distillery request received with distillery: ${JSON.stringify(
         distillery
       )}`
     );
-    const formattedAddress = await this.geocodingService.getFormattedAddress(
-      distillery.location.coordinates[0] as number,
-      distillery.location.coordinates[1] as number
-    );
 
-    distillery.formattedAddress = formattedAddress;
-
-    distillery.dateAdded = new Date();
-    distillery.dateUpdated = new Date();
-
-    const insertedId = await this.distilleryService.createDistillery(
-      distillery
-    );
-
-    return { ...distillery, _id: insertedId.toHexString() };
+    return await this.distilleryService.createDistillery(distillery);
   }
 
   @Patch('/:id')
   public async UpdateDistillery(
     @Param('id') id: string,
-    @Body() distillery: DistilleryDto
+    @Body() distillery: UpdateDistilleryDto
   ): Promise<DistilleryDto> {
     this.logger.log(
       `Update distillery request received with id: ${id} and distillery: ${JSON.stringify(
@@ -113,20 +99,13 @@ export class DistilleryController {
     if (!ObjectId.isValid(id)) {
       throw new BadRequestException('Invalid id');
     }
-    if (distillery.location && distillery.location.coordinates) {
-      const formattedAddress = await this.geocodingService.getFormattedAddress(
-        distillery.location.coordinates[0] as number,
-        distillery.location.coordinates[1] as number
-      );
-      distillery.formattedAddress = formattedAddress;
-    }
 
-    await this.distilleryService.updateDistillery(
+    const updatedDistillery = await this.distilleryService.updateDistillery(
       ObjectId.createFromHexString(id),
       distillery
     );
 
-    return { ...distillery, _id: id };
+    return updatedDistillery;
   }
 
   @Delete('/:id')

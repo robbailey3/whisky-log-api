@@ -1,14 +1,20 @@
 import { DatabaseService } from '@/shared/services/database/database.service';
+import { GeocodingService } from '@/shared/services/geocoding/geocoding.service';
 import { Injectable } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
-import { Filter, InsertOneResult, ObjectId } from 'mongodb';
+import { Filter, ModifyResult, ObjectId } from 'mongodb';
+import { CreateDistilleryDto } from './models/createDistillery.dto';
 import { DistilleryDto } from './models/distillery.dto';
+import { UpdateDistilleryDto } from './models/updateDistillery.dto';
 
 @Injectable()
 export class DistilleryService {
   private readonly COLLECTION_NAME = 'distilleries';
 
-  constructor(private readonly db: DatabaseService) {}
+  constructor(
+    private readonly db: DatabaseService,
+    private readonly geocodingService: GeocodingService
+  ) {}
 
   public async getDistilleries(
     filter: Filter<DistilleryDto>,
@@ -23,7 +29,6 @@ export class DistilleryService {
       .toArray();
 
     return docs.map((doc) => {
-      doc._id = (doc._id as ObjectId).toHexString();
       return plainToInstance(DistilleryDto, doc);
     });
   }
@@ -36,23 +41,49 @@ export class DistilleryService {
     return plainToInstance(DistilleryDto, doc);
   }
 
-  public async createDistillery(distillery: DistilleryDto): Promise<ObjectId> {
+  public async createDistillery(
+    distillery: CreateDistilleryDto
+  ): Promise<DistilleryDto> {
+    const formattedAddress = await this.geocodingService.getFormattedAddress(
+      distillery.location.coordinates[0] as number,
+      distillery.location.coordinates[1] as number
+    );
+
+    const d: DistilleryDto = {
+      ...distillery,
+      formattedAddress,
+      dateAdded: new Date(),
+      dateUpdated: new Date()
+    };
+
     const result = await this.db
       .getCollection<DistilleryDto>(this.COLLECTION_NAME)
-      .insertOne(distillery);
+      .insertOne(d);
 
-    return result.insertedId as ObjectId;
+    return plainToInstance(DistilleryDto, { ...d, _id: result.insertedId });
   }
 
   public async updateDistillery(
     id: ObjectId,
-    distillery: DistilleryDto
+    updates: UpdateDistilleryDto
   ): Promise<DistilleryDto> {
+    let docUpdate: Partial<DistilleryDto> = { ...updates };
+    if (updates.location && updates.location.coordinates) {
+      const formattedAddress = await this.geocodingService.getFormattedAddress(
+        updates.location.coordinates[0] as number,
+        updates.location.coordinates[1] as number
+      );
+      docUpdate = { ...updates, formattedAddress };
+    }
+    await this.db
+      .getCollection<DistilleryDto>(this.COLLECTION_NAME)
+      .findOneAndUpdate({ _id: id }, { $set: { ...docUpdate } });
+
     const result = await this.db
       .getCollection<DistilleryDto>(this.COLLECTION_NAME)
-      .findOneAndUpdate({ _id: id }, { $set: { ...distillery } });
+      .findOne({ _id: id });
 
-    return plainToInstance(DistilleryDto, result.value);
+    return plainToInstance(DistilleryDto, result);
   }
 
   public async deleteDistillery(id: ObjectId): Promise<void> {

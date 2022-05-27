@@ -1,5 +1,9 @@
 import { HttpService } from '@nestjs/axios';
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
 import { GeocodingResponse } from './responses/geocodingResponse';
@@ -22,13 +26,20 @@ export class GeocodingService {
   ): Promise<string> {
     this.logger.log(`Getting formatted address for ${latitude}, ${longitude}`);
 
-    const response = await firstValueFrom(
-      this.httpService.get<GeocodingResponse>(
-        `${this.API_URL}?latlng=${latitude},${longitude}&key=${this.API_KEY}`
-      )
-    );
+    try {
+      const response = await firstValueFrom(
+        this.httpService.get<GeocodingResponse>(
+          `${this.API_URL}?latlng=${latitude},${longitude}&key=${this.API_KEY}`
+        )
+      );
 
-    return response.data.results[0].formatted_address;
+      return response.data.results[0]?.formatted_address ?? '';
+    } catch (e: any) {
+      this.logger.error(
+        `Failed to get formatted address for ${latitude}, ${longitude} with error: ${e.message}`
+      );
+      throw new InternalServerErrorException(e);
+    }
   }
 
   private get API_KEY(): string {
