@@ -1,7 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Collection, MongoClient } from 'mongodb';
-import { delay, from, retry, tap } from 'rxjs';
+import { from, retry, tap } from 'rxjs';
 
 @Injectable()
 export class DatabaseService implements OnModuleInit {
