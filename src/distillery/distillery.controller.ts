@@ -18,6 +18,7 @@ import { GetDistilleriesQuery } from './queries/getDistilleriesQuery.dto';
 import { DistilleryDto } from './models/distillery.dto';
 import { CreateDistilleryDto } from './models/createDistillery.dto';
 import { UpdateDistilleryDto } from './models/updateDistillery.dto';
+import { findOptionsFromQuery } from '@/utils/findOptions';
 
 @Controller('distillery')
 @ApiTags('Distillery')
@@ -54,8 +55,7 @@ export class DistilleryController {
     }
     return await this.distilleryService.getDistilleries(
       filter,
-      query.limit,
-      query.skip
+      findOptionsFromQuery(query)
     );
   }
 

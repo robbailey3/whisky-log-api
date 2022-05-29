@@ -14,6 +14,6 @@ export class BaseModel {
   public dateUpdated: Date;
 
   @ApiProperty({ readOnly: true })
-  @Transform(({ value }) => value.toHexString(), { toPlainOnly: true })
+  @Type(() => String)
   public updatedBy?: ObjectId;
 }

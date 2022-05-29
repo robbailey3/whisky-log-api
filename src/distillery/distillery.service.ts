@@ -2,7 +2,7 @@ import { DatabaseService } from '@/shared/services/database/database.service';
 import { GeocodingService } from '@/shared/services/geocoding/geocoding.service';
 import { Injectable } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
-import { Filter, ModifyResult, ObjectId } from 'mongodb';
+import { Filter, FindOptions, ModifyResult, ObjectId } from 'mongodb';
 import { CreateDistilleryDto } from './models/createDistillery.dto';
 import { DistilleryDto } from './models/distillery.dto';
 import { UpdateDistilleryDto } from './models/updateDistillery.dto';
@@ -18,14 +18,11 @@ export class DistilleryService {
 
   public async getDistilleries(
     filter: Filter<DistilleryDto>,
-    limit: number,
-    skip: number
+    options: FindOptions
   ): Promise<DistilleryDto[]> {
     const docs = await this.db
       .getCollection<DistilleryDto>(this.COLLECTION_NAME)
-      .find(filter)
-      .limit(limit)
-      .skip(skip)
+      .find(filter, options)
       .toArray();
 
     return docs.map((doc) => {
@@ -73,7 +70,7 @@ export class DistilleryService {
         updates.location.coordinates[0] as number,
         updates.location.coordinates[1] as number
       );
-      docUpdate = { ...updates, formattedAddress };
+      docUpdate = { ...updates, formattedAddress, dateUpdated: new Date() };
     }
     await this.db
       .getCollection<DistilleryDto>(this.COLLECTION_NAME)

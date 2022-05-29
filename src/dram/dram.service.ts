@@ -1,7 +1,7 @@
 import { DatabaseService } from '@/shared/services/database/database.service';
 import { Injectable, Logger } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
-import { Collection, Filter, ObjectId } from 'mongodb';
+import { Filter, FindOptions, ObjectId } from 'mongodb';
 import { CreateDramDto } from './models/createDram.dto';
 import { DramDto } from './models/dram.dto';
 import { UpdateDramDto } from './models/updateDram.dto';
@@ -14,14 +14,13 @@ export class DramService {
 
   constructor(private readonly databaseService: DatabaseService) {}
 
-  public async getDrams(
+  public async find(
     filter: Filter<DramDto>,
-    limit: number,
-    skip: number
+    options: FindOptions
   ): Promise<DramDto[]> {
     const docs = await this.databaseService
       .getCollection<DramDto>(this.COLLECTION_NAME)
-      .find(filter, { limit, skip })
+      .find(filter, options)
       .toArray();
 
     return docs.map((doc) => {
@@ -29,7 +28,7 @@ export class DramService {
     });
   }
 
-  public async getDramById(id: ObjectId) {
+  public async findById(id: ObjectId) {
     const doc = await this.databaseService
       .getCollection<DramDto>(this.COLLECTION_NAME)
       .findOne({ _id: id });
@@ -37,7 +36,7 @@ export class DramService {
     return plainToInstance(DramDto, doc);
   }
 
-  public async createDram(createDram: CreateDramDto) {
+  public async create(createDram: CreateDramDto) {
     const dram: DramDto = {
       ...createDram,
       dateAdded: new Date(),
@@ -51,15 +50,18 @@ export class DramService {
     return plainToInstance(DramDto, { ...dram, _id: result.insertedId });
   }
 
-  public async updateDram(id: ObjectId, updateDram: UpdateDramDto) {
+  public async update(id: ObjectId, updateDram: UpdateDramDto) {
     await this.databaseService
       .getCollection<DramDto>(this.COLLECTION_NAME)
-      .updateOne({ _id: id }, { $set: updateDram });
+      .updateOne(
+        { _id: id },
+        { $set: { ...updateDram, dateUpdated: new Date() } }
+      );
 
-    return this.getDramById(id);
+    return this.findById(id);
   }
 
-  public async deleteDram(id: ObjectId): Promise<void> {
+  public async delete(id: ObjectId): Promise<void> {
     await this.databaseService
       .getCollection<DramDto>(this.COLLECTION_NAME)
       .deleteOne({ _id: id });

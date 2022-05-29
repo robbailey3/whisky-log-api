@@ -3,7 +3,7 @@ import { Type } from 'class-transformer';
 import { IsIn, IsNumber, IsString, Max, Min } from 'class-validator';
 import { SortDirection } from 'mongodb';
 
-export class GetDramQueryDto {
+export class GetWhiskyQueryDto {
   @ApiProperty({ default: 10, required: false })
   @IsNumber()
   @Type(() => Number)

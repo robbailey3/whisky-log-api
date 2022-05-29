@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
+  IsIn,
   IsLatitude,
   IsLongitude,
   IsNumber,
@@ -9,6 +10,7 @@ import {
   Min,
   ValidateIf
 } from 'class-validator';
+import { SortDirection } from 'mongodb';
 
 export class GetDistilleriesQuery {
   @ValidateIf((o) => o.name !== undefined)
@@ -61,4 +63,12 @@ export class GetDistilleriesQuery {
   @Min(0)
   @Type(() => Number)
   public skip?: number;
+
+  @ApiProperty({ default: 'dateAdded', required: false })
+  @IsString()
+  public sort?: string;
+
+  @ApiProperty({ default: 'desc', required: false, type: String })
+  @IsIn(['asc', 'desc'])
+  public sortDirection?: SortDirection;
 }
