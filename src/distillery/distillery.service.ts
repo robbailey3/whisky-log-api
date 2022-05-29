@@ -2,7 +2,7 @@ import { DatabaseService } from '@/shared/services/database/database.service';
 import { GeocodingService } from '@/shared/services/geocoding/geocoding.service';
 import { Injectable } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
-import { Filter, FindOptions, ModifyResult, ObjectId } from 'mongodb';
+import { Filter, FindOptions, ObjectId } from 'mongodb';
 import { CreateDistilleryDto } from './models/createDistillery.dto';
 import { DistilleryDto } from './models/distillery.dto';
 import { UpdateDistilleryDto } from './models/updateDistillery.dto';
