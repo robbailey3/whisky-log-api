@@ -1,4 +1,5 @@
 import { Module, OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PassportModule } from '@nestjs/passport';
 import firebase from 'firebase-admin';
 import { FirebaseStrategy } from './firebase.strategy';
@@ -9,10 +10,12 @@ import { FirebaseStrategy } from './firebase.strategy';
   exports: [PassportModule]
 })
 export class AuthModule implements OnModuleInit {
+  constructor(private readonly configService: ConfigService) {}
   async onModuleInit() {
     firebase.initializeApp({
       credential: firebase.credential.cert(
-        require('../../whiskyapp-351319-firebase-adminsdk-1zkdk-48b8b1e67d.json')
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        require(this.configService.get('FIREBASE_CONFIG'))
       )
     });
   }
