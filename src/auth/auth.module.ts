@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { PassportModule } from '@nestjs/passport';
 import firebase from 'firebase-admin';
 import { FirebaseStrategy } from './firebase.strategy';
+import * as path from 'path';
 
 @Module({
   imports: [PassportModule.register({ defaultStrategy: 'firebase-jwt' })],
@@ -15,7 +16,7 @@ export class AuthModule implements OnModuleInit {
     firebase.initializeApp({
       credential: firebase.credential.cert(
         // eslint-disable-next-line @typescript-eslint/no-var-requires
-        require(this.configService.get('FIREBASE_CONFIG'))
+        require(path.resolve(this.configService.get('FIREBASE_CONFIG')))
       )
     });
   }
