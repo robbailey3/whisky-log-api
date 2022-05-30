@@ -9,9 +9,11 @@ import {
   Param,
   Patch,
   Post,
-  Query
+  Query,
+  Req,
+  UseGuards
 } from '@nestjs/common';
-import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { ObjectId } from 'mongodb';
 import { DistilleryService } from './distillery.service';
 import { GetDistilleriesQuery } from './queries/getDistilleriesQuery.dto';
@@ -19,9 +21,12 @@ import { DistilleryDto } from './models/distillery.dto';
 import { CreateDistilleryDto } from './models/createDistillery.dto';
 import { UpdateDistilleryDto } from './models/updateDistillery.dto';
 import { findOptionsFromQuery } from '@/utils/findOptions';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('distillery')
 @ApiTags('Distillery')
+@UseGuards(AuthGuard())
+@ApiBearerAuth()
 export class DistilleryController {
   private readonly logger = new Logger(DistilleryController.name);
 
@@ -33,8 +38,10 @@ export class DistilleryController {
     description: 'An array of distillery objects'
   })
   public async GetDistilleries(
+    @Req() req: any,
     @Query() query: GetDistilleriesQuery
   ): Promise<DistilleryDto[]> {
+    console.log(req.user);
     this.logger.log(
       `Get distilleries request received with query: ${JSON.stringify(query)}`
     );
