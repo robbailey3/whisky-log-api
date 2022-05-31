@@ -32,8 +32,10 @@ export class UserService {
 
   public async create(user: CreateUserDto) {
     const { password, ...sanitizedUser } = user;
+
     const newUser: UserDto = {
       ...sanitizedUser,
+      lastLogin: null,
       dateAdded: new Date(),
       dateUpdated: new Date()
     };

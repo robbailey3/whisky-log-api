@@ -18,15 +18,23 @@ export class FirebaseService implements OnModuleInit {
   }
 
   public async createFirebaseUser(user: CreateUserDto) {
-    return await firebase
-      .auth()
-      .createUser({ email: user.email, password: user.password });
+    return await firebase.auth().createUser({
+      email: user.email,
+      password: user.password,
+      displayName: `${user.firstName} ${user.lastName}`
+    });
   }
 
   public async setUserPermission(userId: string, permissions: string[]) {
     return await firebase.auth().setCustomUserClaims(userId, {
       permissions
     });
+  }
+
+  public async getUserPermissions(userId: string): Promise<string[]> {
+    const user = await firebase.auth().getUser(userId);
+
+    return user?.customClaims?.permissions || [];
   }
 
   public async getUserByEmail(email: string) {

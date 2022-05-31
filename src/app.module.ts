@@ -7,6 +7,13 @@ import { AuthModule } from './auth/auth.module';
 import { DramModule } from './dram/dram.module';
 
 @Module({
-  imports: [WhiskyModule, DistilleryModule, SharedModule, UserModule, AuthModule, DramModule]
+  imports: [
+    WhiskyModule,
+    DistilleryModule,
+    SharedModule,
+    UserModule,
+    AuthModule,
+    DramModule
+  ]
 })
 export class AppModule {}

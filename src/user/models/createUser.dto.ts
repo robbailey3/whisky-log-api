@@ -4,11 +4,17 @@ import { IsArray, IsEmail, IsString } from 'class-validator';
 export class CreateUserDto {
   @IsEmail()
   @ApiProperty({ example: 'email@example.com' })
-  email: string;
+  public email: string;
 
   @IsString()
-  password: string;
+  public password: string;
 
   @IsArray()
-  permissions: string[];
+  public permissions: string[];
+
+  @IsString()
+  public firstName: string;
+
+  @IsString()
+  public lastName: string;
 }

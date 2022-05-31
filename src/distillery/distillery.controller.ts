@@ -11,6 +11,7 @@ import {
   Post,
   Query,
   Req,
+  SetMetadata,
   UseGuards
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
@@ -22,17 +23,23 @@ import { CreateDistilleryDto } from './models/createDistillery.dto';
 import { UpdateDistilleryDto } from './models/updateDistillery.dto';
 import { findOptionsFromQuery } from '@/utils/findOptions';
 import { AuthGuard } from '@nestjs/passport';
+import { PermissionsGuard } from '@/auth/permissions/permissions.guard';
+import { Permissions } from '@/auth/permissions/permissions.decorator';
+import { Permission } from '@/auth/permissions/permissions';
+
+export const Roles = (...roles: string[]) => SetMetadata('roles', roles);
 
 @Controller('distillery')
 @ApiTags('Distillery')
-@UseGuards(AuthGuard())
 @ApiBearerAuth()
+@UseGuards(AuthGuard(), PermissionsGuard)
 export class DistilleryController {
   private readonly logger = new Logger(DistilleryController.name);
 
   constructor(private readonly distilleryService: DistilleryService) {}
 
   @Get()
+  @Permissions(Permission['distillery:create'])
   @ApiOkResponse({
     type: [DistilleryDto],
     description: 'An array of distillery objects'
@@ -41,7 +48,6 @@ export class DistilleryController {
     @Req() req: any,
     @Query() query: GetDistilleriesQuery
   ): Promise<DistilleryDto[]> {
-    console.log(req.user);
     this.logger.log(
       `Get distilleries request received with query: ${JSON.stringify(query)}`
     );
